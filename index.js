@@ -1,25 +1,28 @@
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    // Extract target URL from query or path
     const targetUrl = url.searchParams.get("url");
 
     if (!targetUrl) {
-      return new Response("Missing 'url' parameter", { status: 400 });
+      return new Response("Acekallas Proxy: Please provide a ?url= parameter", { status: 400 });
     }
 
-    // Fetch from the real source
-    const response = await fetch(targetUrl);
-    
-    // Reconstruct response with CORS headers
-    const newHeaders = new Headers(response.headers);
-    newHeaders.set("Access-Control-Allow-Origin", "*");
-    newHeaders.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    try {
+      const response = await fetch(targetUrl, {
+        headers: { "User-Agent": "Acekallas-Pollen-Bot/1.0" }
+      });
+      
+      const newHeaders = new Headers(response.headers);
+      // Only allow your domains to use this proxy for better security
+      newHeaders.set("Access-Control-Allow-Origin", "https://acekallas.com");
+      newHeaders.set("Access-Control-Allow-Methods", "GET, OPTIONS");
 
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: newHeaders,
-    });
+      return new Response(response.body, {
+        status: response.status,
+        headers: newHeaders,
+      });
+    } catch (e) {
+      return new Response("Proxy Error: " + e.message, { status: 500 });
+    }
   },
 };
